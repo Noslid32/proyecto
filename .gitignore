@@ -1,0 +1,6 @@
+node_modules/
+Web/Backend/node_modules/
+Web/Frontend/node_modules/
+.env
+build/
+dist/
