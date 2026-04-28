@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" 
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id 
+  email     String     @unique
+  name      String?
+  role      String     @default("CONSUMER") // Can be "CONSUMER" or "OWNER"
+  
+  rooms     Room[]
+  favorites Favorite[] 
+  
+  createdAt DateTime   @default(now())
+}
+
+model Room {
+  id            String     @id @default(uuid()) 
+  imageUrls     String[]   
+  aiDescription String?    // The AI generated text
+  style         String?    // e.g., "Industrial", "Minimalist"
+  isPublished   Boolean    @default(false) // Only True shows up on mobile
+  viewsCount    Int        @default(0)
+  contactsCount Int        @default(0) 
+  sharesCount   Int        @default(0)
+  location      String     @default("Ubicación no especificada")
+  price         String?
+  area          String? 
+  
+  // RELATIONS
+  ownerId       String   
+  owner         User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  favorites     Favorite[] 
+
+  createdAt     DateTime   @default(now())
+}
+
+//THE INTERACTIONS (For Stats & Mobile App)
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  roomId    String
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  @@unique([userId, roomId]) 
+}
