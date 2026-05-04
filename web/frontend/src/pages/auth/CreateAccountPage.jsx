@@ -1,4 +1,3 @@
-// Assuming your firebase.js is inside the src/ folder:
 import { useState } from 'react';
 import { auth } from '../../lib/firebase/config'; 
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -9,6 +8,16 @@ export default function CreateAccountPage() {
   const [password, setPassword] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const navigate = useNavigate();
+
+  const colors = {
+    blue: '#2c5caa',
+    mint: '#20dca3',
+    background: '#eef1f6',
+    cardBg: '#ffffff',
+    textDark: '#2c3e50',
+    textLight: '#64748b',
+    border: '#e2e8f0'
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -34,44 +43,47 @@ export default function CreateAccountPage() {
     }
   };
 
- return (
-    <div style={{ backgroundColor: '#1e88e5', minHeight: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-      <div style={{ backgroundColor: '#a3a5c3', border: '3px solid black', borderRadius: '15px', padding: '40px 30px', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: '6px 6px 0px black' }}>
+  const inputStyle = {
+    width: '100%', padding: '14px', fontSize: '15px', border: `1px solid ${colors.border}`, 
+    borderRadius: '12px', backgroundColor: '#f8f9fb', outline: 'none', boxSizing: 'border-box', color: colors.textDark
+  };
+
+  return (
+    <div style={{ backgroundColor: colors.background, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+      
+      <div style={{ backgroundColor: colors.cardBg, padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: `1px solid ${colors.border}` }}>
         
-        <h2 style={{ fontSize: '32px', fontWeight: 'bold', margin: '0 0 10px 0' }}>Crear Cuenta</h2>
-        <p style={{ fontSize: '16px', margin: '0 0 25px 0' }}>Únete a RoomIA y diseña tu espacio ideal.</p>
+        <h2 style={{ fontWeight: '800', fontSize: '28px', color: colors.blue, margin: '0 0 10px 0' }}>Crea tu cuenta</h2>
+        <p style={{ color: colors.textLight, fontSize: '15px', marginBottom: '30px', marginTop: 0 }}>Únete a la mejor plataforma inmobiliaria</p>
 
-        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
           <div style={{ textAlign: 'left' }}>
-            <label style={{ fontWeight: 'bold', fontSize: '16px', display: 'block', marginBottom: '5px' }}>Correo Electrónico:</label>
-            <input type="email" required placeholder="tu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '90%', padding: '10px', fontSize: '16px', border: '3px solid black', borderRadius: '8px' }} />
+            <label style={{ fontWeight: '600', fontSize: '14px', color: colors.textDark, display: 'block', marginBottom: '8px' }}>Correo Electrónico</label>
+            <input type="email" required placeholder="tu@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
           </div>
 
           <div style={{ textAlign: 'left' }}>
-            <label style={{ fontWeight: 'bold', fontSize: '16px', display: 'block', marginBottom: '5px' }}>Contraseña:</label>
-            <input type="password" required placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '90%', padding: '10px', fontSize: '16px', border: '3px solid black', borderRadius: '8px' }} />
+            <label style={{ fontWeight: '600', fontSize: '14px', color: colors.textDark, display: 'block', marginBottom: '8px' }}>Contraseña</label>
+            <input type="password" required placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
           </div>
 
-          <button type="submit" style={{ backgroundColor: '#00e5ff', color: 'black', border: '3px solid black', borderRadius: '10px', padding: '12px 20px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', width: '100%', marginTop: '10px', boxShadow: '2px 2px 0px black' }}>
+          <button type="submit" style={{ backgroundColor: colors.mint, color: colors.textDark, border: 'none', borderRadius: '12px', padding: '14px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.2s', marginTop: '10px', boxShadow: '0 4px 15px rgba(32, 220, 163, 0.3)' }}>
             Registrarse
           </button>
         </form>
 
         {statusMessage && (
-          <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#ff5252', color: 'white', border: '2px solid black', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' }}>
+          <div style={{ marginTop: '20px', padding: '12px', backgroundColor: statusMessage.includes('Error') ? '#fef2f2' : '#ecfdf5', color: statusMessage.includes('Error') ? '#ef4444' : '#059669', borderRadius: '8px', fontWeight: '500', fontSize: '14px' }}>
             {statusMessage}
           </div>
         )}
 
-        {/* LINK BACK TO LOGIN */}
-        <p style={{ marginTop: '25px', fontSize: '15px', fontWeight: 'bold' }}>
-          ¿Ya tienes una cuenta?{' '}
-          <Link to="/login" style={{ color: '#1e88e5', textDecoration: 'underline' }}>
-            Inicia sesión aquí
-          </Link>
+        <p style={{ marginTop: '30px', fontSize: '15px', color: colors.textLight }}>
+          ¿Ya tienes una cuenta? <Link to="/login" style={{ color: colors.blue, fontWeight: 'bold', textDecoration: 'none' }}>Inicia sesión</Link>
         </p>
-        
       </div>
+
     </div>
   );
 }

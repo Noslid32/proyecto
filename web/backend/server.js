@@ -6,6 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient(); 
 const app = express();
 const { generateRoomDescription, generateCoachAdvice } = require('./services/GeminiService');
+const { parse } = require('dotenv');
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -18,6 +19,19 @@ app.get('/', (req, res) => {
 // Get Methods
 app.get('/api/test', (req, res) => {
   res.json({ message: "Mensaje secreto desde el backend de RoomIA!" });
+});
+
+app.get('/api/rooms', async (req, res) => {
+  try {
+    const rooms = await prisma.room.findMany({
+      where: { isPublished: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(rooms);
+  } catch (error) {
+    console.error("Error obteniendo habitaciones:", error);
+    res.status(500).json({ error: "No se pudieron obtener las habitaciones" });
+  }
 });
 
 app.get('/api/rooms/user/:userId', async (req, res) => {
@@ -113,7 +127,7 @@ app.get('/api/users/:userId/coach', async (req, res) => {
 
 // Post Methods
 app.post('/api/rooms', async (req, res) => {
-  const { imageUrls, aiDescription, style, location, price, area, ownerId } = req.body;
+  const { imageUrls, aiDescription, style, location, price, latitude, longitude, area, ownerId, isPublished } = req.body;
   try {
 
     if (!imageUrls || !ownerId) {
@@ -128,8 +142,10 @@ app.post('/api/rooms', async (req, res) => {
         location: location,
         price: price || 0,
         area: area || 0,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
         ownerId: ownerId, 
-        isPublished: false
+        isPublished: isPublished !== undefined ? isPublished : true
       }
     });
     
@@ -177,6 +193,25 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+app.post('/api/rooms/:roomId/interact', async (req, res) => {
+  const { shares, contacts, viewsCount} = req.body;
+  const { roomId } = req.params;
+
+  try {
+    const room = await prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) return res.status(404).json({ error: "Habitación no encontrada" });
+    const updatedRoom = await prisma.room.update({
+      where: { id: roomId },
+      data: { sharesCount: room.sharesCount + shares, contactsCount: room.contactsCount + contacts, viewsCount: room.viewsCount + viewsCount }
+    });
+
+    res.json(updatedRoom);
+  } catch (error) {
+    console.error("Error al interactuar con la habitación:", error);
+    res.status(500).json({ error: "Error al actualizar la habitación" });
+  }
+});
+
 // Delete Methods
 app.delete('/api/rooms/:roomId', async (req, res) => {
   const { roomId } = req.params;  
@@ -194,11 +229,11 @@ app.delete('/api/rooms/:roomId', async (req, res) => {
 // Put Methods
 app.put('/api/rooms/:roomId', async (req, res) => {
   const { roomId } = req.params;
-  const { imageUrls, aiDescription, style, location, price, area } = req.body;
+  const { imageUrls, aiDescription, style, location, price, latitude, longitude, area } = req.body;
   try {
     const updatedRoom = await prisma.room.update({
       where: { id: roomId },
-      data: { imageUrls, aiDescription, style, location, price, area }
+      data: { imageUrls, aiDescription, style, location, price, latitude, longitude, area }
     });
     res.json(updatedRoom);
   } catch (error) {
@@ -209,5 +244,5 @@ app.put('/api/rooms/:roomId', async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`👨‍🍳 Chef (Backend) listo y cocinando en el puerto ${PORT}`);
+  console.log(`Backend listo en el puerto ${PORT}`);
 });

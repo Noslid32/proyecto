@@ -15,6 +15,16 @@ export default function EditPage() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [message, setMessage] = useState({ text: "", type: "" });
 
+  const colors = {
+    blue: '#2c5caa',
+    mint: '#20dca3',
+    background: '#eef1f6',
+    cardBg: '#ffffff',
+    textDark: '#2c3e50',
+    textLight: '#64748b',
+    border: '#e2e8f0'
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -32,131 +42,88 @@ export default function EditPage() {
     if (e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file)); 
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
-  const handleSaveChanges = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    setMessage({ text: "Guardando cambios (esto puede tardar unos segundos)...", type: "info" });
-    
+    setMessage({ text: "Guardando cambios...", type: "info" });
     try {
-      let currentPhotoURL = user.photoURL;
+      let photoURL = user.photoURL;
 
       if (imageFile) {
-        const storageRef = ref(storage, `avatars/${user.uid}`);
-        await uploadBytes(storageRef, imageFile);
-        currentPhotoURL = await getDownloadURL(storageRef);
+        const imageRef = ref(storage, `avatars/${user.uid}`);
+        await uploadBytes(imageRef, imageFile);
+        photoURL = await getDownloadURL(imageRef);
       }
 
-      await updateProfile(user, { 
-        displayName: name,
-        photoURL: currentPhotoURL
-      });
+      await updateProfile(user, { displayName: name, photoURL: photoURL });
 
-      if (newPassword.length > 0) {
-        if (newPassword.length < 6) {
-          setMessage({ text: "La contraseña debe tener al menos 6 caracteres.", type: "error" });
-          return;
-        }
+      if (newPassword) {
         await updatePassword(user, newPassword);
       }
 
       setMessage({ text: "¡Perfil actualizado con éxito!", type: "success" });
-      
       setTimeout(() => navigate('/perfil'), 2000);
-
     } catch (error) {
-      if (error.code === 'auth/requires-recent-login') {
-        setMessage({ text: "Por seguridad, cierra sesión y vuelve a entrar para cambiar tu contraseña.", type: "error" });
-      } else {
-        setMessage({ text: "Error: " + error.message, type: "error" });
-      }
+      console.error(error);
+      setMessage({ text: "Error: No se pudo actualizar el perfil. Si cambiaste la contraseña, tal vez debas iniciar sesión nuevamente.", type: "error" });
     }
   };
 
-  const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com');
+  const inputStyle = {
+    width: '100%', padding: '12px 14px', fontSize: '15px', border: `1px solid ${colors.border}`, 
+    borderRadius: '10px', backgroundColor: '#f8f9fb', outline: 'none', boxSizing: 'border-box', color: colors.textDark
+  };
 
   return (
-    <div style={{ backgroundColor: '#1e88e5', minHeight: '80vh', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ backgroundColor: '#a3a5c3', border: '3px solid black', borderRadius: '15px', padding: '40px', width: '100%', maxWidth: '450px', boxShadow: '6px 6px 0px black' }}>
+    <div style={{ backgroundColor: colors.background, minHeight: '85vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 20px', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+      
+      <div style={{ backgroundColor: colors.cardBg, padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '450px', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: `1px solid ${colors.border}` }}>
         
-        <h2 style={{ fontWeight: 'bold', fontSize: '28px', color: 'black', marginBottom: '5px', textAlign: 'center' }}>
-          Editar Perfil
-        </h2>
-        <p style={{ textAlign: 'center', marginBottom: '25px' }}>Actualiza tu información y foto</p>
+        <h2 style={{ fontWeight: '800', fontSize: '26px', color: colors.blue, margin: '0 0 25px 0', textAlign: 'center' }}>Editar Perfil</h2>
 
-        <form onSubmit={handleSaveChanges} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {/* Change Profile Picture Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ 
-              width: '100px', height: '100px', backgroundColor: '#1e88e5', border: '3px solid black', 
-              borderRadius: '50%', marginBottom: '10px', display: 'flex', justifyContent: 'center', 
-              alignItems: 'center', fontSize: '60px', color: 'black', overflow: 'hidden' 
-            }}>
-              {previewUrl ? (
-                <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <VscAccount />
-              )}
+          {/* Avatar Edit */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
+            <div style={{ width: '90px', height: '90px', borderRadius: '50%', border: `3px solid ${colors.mint}`, display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '40px', color: colors.blue, overflow: 'hidden', backgroundColor: '#f8f9fb' }}>
+              {previewUrl ? <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <VscAccount />}
             </div>
             
-            <label style={{ cursor: 'pointer', backgroundColor: 'white', padding: '8px 15px', border: '2px solid black', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' }}>
-              Subir Foto
-              {/* This input is hidden, the label acts as the button */}
+            <label style={{ backgroundColor: '#f1f5f9', color: colors.textDark, padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', border: `1px solid ${colors.border}` }}>
+              Cambiar Foto
               <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
             </label>
           </div>
 
-          {/* Change Name */}
+          {/* Name Field if want to modify */}
           <div>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Nombre de Usuario:</label>
-            <input 
-              type="text" 
-              value={name} 
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Tu nombre"
-              style={{ width: '90%', padding: '10px', border: '3px solid black', borderRadius: '8px', fontSize: '16px' }}
-            />
+            <label style={{ fontWeight: '600', fontSize: '13px', color: colors.textDark, display: 'block', marginBottom: '6px' }}>Nombre a mostrar</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required style={inputStyle} />
           </div>
 
-          {/* Change Password (Only for Email/Password users) */}
-          {!isGoogleUser && (
+          {/* Hide the new password field if the user logged in with Google */}
+          {user?.providerData[0]?.providerId === 'password' && (
             <div>
-              <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>Nueva Contraseña:</label>
-              <input 
-                type="password" 
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Dejar en blanco para no cambiar"
-                style={{ width: '90%', padding: '10px', border: '3px solid black', borderRadius: '8px', fontSize: '16px' }}
-              />
+              <label style={{ fontWeight: '600', fontSize: '13px', color: colors.textDark, display: 'block', marginBottom: '6px' }}>Nueva Contraseña</label>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Dejar en blanco para no cambiar" style={inputStyle} />
             </div>
           )}
 
-          {/* Status Message */}
           {message.text && (
-            <div style={{ 
-              padding: '10px', 
-              backgroundColor: message.type === 'error' ? '#ff5252' : '#4caf50', 
-              color: 'white', 
-              border: '2px solid black', 
-              borderRadius: '8px', 
-              fontWeight: 'bold', 
-              textAlign: 'center' 
-            }}>
+            <div style={{ padding: '12px', backgroundColor: message.type === 'error' ? '#fef2f2' : message.type === 'info' ? '#eff6ff' : '#ecfdf5', color: message.type === 'error' ? '#ef4444' : message.type === 'info' ? '#3b82f6' : '#059669', borderRadius: '8px', fontSize: '14px', fontWeight: '500', textAlign: 'center' }}>
               {message.text}
             </div>
           )}
 
-          {/* Buttons */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="submit" style={{ flex: 1, backgroundColor: '#00e5ff', color: 'black', border: '3px solid black', borderRadius: '10px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '2px 2px 0px black' }}>
-              Guardar
-            </button>
-            <button type="button" onClick={() => navigate('/perfil')} style={{ flex: 1, backgroundColor: '#9e9e9e', color: 'black', border: '3px solid black', borderRadius: '10px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '2px 2px 0px black' }}>
+          <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
+            <button type="button" onClick={() => navigate('/perfil')} style={{ flex: 1, backgroundColor: 'transparent', color: colors.textLight, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', fontWeight: '600', cursor: 'pointer' }}>
               Cancelar
+            </button>
+            <button type="submit" style={{ flex: 1, backgroundColor: colors.mint, color: colors.textDark, border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 15px rgba(32, 220, 163, 0.3)' }}>
+              Guardar
             </button>
           </div>
 
