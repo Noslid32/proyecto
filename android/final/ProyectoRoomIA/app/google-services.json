@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "283171216863",
+    "project_id": "roomia-2585f",
+    "storage_bucket": "roomia-2585f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:283171216863:android:dbd67909dbcdb90a26386a",
+        "android_client_info": {
+          "package_name": "com.example.proyecto_roomia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYunvRq-o63xtC6lnbNycJzxTb_leA7R4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
