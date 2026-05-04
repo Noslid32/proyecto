@@ -35,3 +35,7 @@ RoomIA es una plataforma integral (Web + Mobile) que revoluciona la forma en que
 * Filtros avanzados en el mapa (rango de precio, distancia, m²).
 * Una mejor interracion con la tarjeta de cada habitacion.
 * Implementar un croquis para mejor visualizacion de cada habitacion.
+
+## Video Demostracion
+[Ver video en Google Drive](https://drive.google.com/drive/folders/1Zva-_8EWNWgqEVCXL9q7QKU7fKHJiMB8?usp=sharing)
+
