@@ -383,8 +383,7 @@ fun HomeScreen(navController: NavController) {
                                 }
                             }
 
-                            // 2. DETALLES DEL CUARTO
-                            // 2. DETALLES DEL CUARTO
+
                             Column(modifier = Modifier.padding(16.dp)) {
                                 // ... (Nombre y botones de arriba se quedan igual) ...
                                 Row(
@@ -398,9 +397,62 @@ fun HomeScreen(navController: NavController) {
                                         fontSize = 18.sp
                                     )
                                     Row {
-                                        IconButton(onClick = { /* Favoritos */ }) {
-                                            Icon(Icons.Default.FavoriteBorder, contentDescription = null, tint = Color.Gray)
+                                        //  REEMPLAZA SOLO LA PARTE DEL BOTÓN DE FAVORITOS EN HomeScreen
+
+                                        val esFavorito = cuarto.id in favoritosIds
+
+                                        IconButton(onClick = {
+                                            user?.uid?.let { uid ->
+
+                                                db.collection("favoritos")
+                                                    .whereEqualTo("usuarioId", uid)
+                                                    .whereEqualTo("cuartoId", cuarto.id)
+                                                    .get()
+                                                    .addOnSuccessListener { docs ->
+
+                                                        if (docs.isEmpty) {
+                                                            //AGREGAR A FAVORITOS
+                                                            val favorito = hashMapOf(
+                                                                "usuarioId" to uid,
+                                                                "cuartoId" to cuarto.id
+                                                            )
+
+                                                            db.collection("favoritos").add(favorito)
+
+                                                            // actualizar UI
+                                                            favoritosIds = favoritosIds + cuarto.id
+
+                                                        } else {
+                                                            // QUITAR DE FAVORITOS
+                                                            docs.forEach { it.reference.delete() }
+
+                                                            // actualizar UI
+                                                            favoritosIds = favoritosIds - cuarto.id
+                                                        }
+                                                    }
+                                            }
+                                        }) {
+                                            Icon(
+                                                imageVector = if (esFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                contentDescription = null,
+                                                tint = if (esFavorito) Color.Red else Color.Gray
+                                            )
                                         }
+
+
+// 🔥 ASEGÚRATE DE TENER ESTO EN TU HomeScreen (YA LO TIENES PERO CONFIRMAR)
+
+                                        LaunchedEffect(user?.uid) {
+                                            user?.uid?.let { uid ->
+                                                db.collection("favoritos")
+                                                    .whereEqualTo("usuarioId", uid)
+                                                    .get()
+                                                    .addOnSuccessListener { docs ->
+                                                        favoritosIds = docs.map { it.getString("cuartoId") ?: "" }.toSet()
+                                                    }
+                                            }
+                                        }
+
                                         IconButton(onClick = { cuartoSeleccionado = null }) {
                                             Text("✕", color = Color.Gray, fontWeight = FontWeight.Bold)
                                         }
