@@ -103,4 +103,49 @@ object CuartoRepository {
         }
     }
 
+    suspend fun buscarCuartosConIA(userQuery: String): List<Cuarto> = withContext(Dispatchers.IO) {
+        try {
+            // Creamos el JSON que enviaremos
+            val jsonBody = JSONObject().apply {
+                put("userQuery", userQuery)
+            }
+
+            val request = Request.Builder()
+                .url("$BASE_URL/api/rooms/search")
+                .header("ngrok-skip-browser-warning", "true")
+                .post(jsonBody.toString().toRequestBody(JSON))
+                .build()
+
+            val response = client.newCall(request).execute()
+            val body = response.body?.string() ?: return@withContext emptyList()
+
+            // Reutilizamos tu lógica de parseo
+            val jsonArray = JSONArray(body)
+            val cuartosFiltrados = mutableListOf<Cuarto>()
+
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                cuartosFiltrados.add(
+                    Cuarto(
+                        id = obj.optString("id", ""),
+                        style = obj.optString("style", ""),
+                        location = obj.optString("location", ""),
+                        price = obj.optString("price", ""),
+                        area = obj.optString("area", ""),
+                        aiDescription = obj.optString("aiDescription", ""),
+                        imageUrls = buildList {
+                            val arr = obj.optJSONArray("imageUrls") ?: return@buildList
+                            for (j in 0 until arr.length()) add(arr.getString(j))
+                        },
+                        latitude = obj.optDouble("latitude", 0.0),
+                        longitude = obj.optDouble("longitude", 0.0)
+                    )
+                )
+            }
+            cuartosFiltrados
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
 }

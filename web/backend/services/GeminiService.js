@@ -83,4 +83,31 @@ async function generateRoomDescription(style, area, location, imageBase64) {
   }
 }
 
-module.exports = { generateRoomDescription, generateCoachAdvice };
+async function semanticSearchRooms(userQuery, roomsData) {
+  try {
+    const prompt = `
+      Eres un agente inmobiliario experto. 
+      El usuario busca lo siguiente: "${userQuery}".
+      
+      Aquí tienes la lista de habitaciones disponibles en formato JSON:
+      ${JSON.stringify(roomsData)}
+      
+      Analiza las descripciones y devuelve ÚNICAMENTE un arreglo JSON puro con los IDs de las habitaciones que mejor se adapten a lo que busca el usuario. 
+      Si ninguna encaja bien, devuelve un arreglo vacío []. 
+      NO escribas texto extra, explicaciones, ni uses bloques de código o formato Markdown (no uses \`\`\`json). 
+      Solo quiero el arreglo, por ejemplo: ["id1", "id2"].
+    `;
+
+    const result = await model.generateContent(prompt);
+    let aiResponse = result.response.text().trim();
+    aiResponse = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+    const matchedIds = JSON.parse(aiResponse);
+    
+    return matchedIds;
+  } catch (error) {
+    console.error("Error en Gemini semanticSearchRooms:", error);
+    return []; 
+  }
+}
+
+module.exports = { generateRoomDescription, generateCoachAdvice, semanticSearchRooms };

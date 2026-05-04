@@ -85,6 +85,9 @@ fun HomeScreen(navController: NavController) {
     var cuartoSeleccionado by remember { mutableStateOf<Cuarto?>(null) }
     var favoritosIds by remember { mutableStateOf<Set<String>>(emptySet()) }
 
+    var searchText by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+
     // ← NUEVO: cuartos dinámicos desde la API
     var cuartos by remember { mutableStateOf<List<Cuarto>>(emptyList()) }
 
@@ -224,19 +227,40 @@ fun HomeScreen(navController: NavController) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = { Text("Pregúntale a la IA...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        modifier = Modifier.weight(1f),
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        placeholder = { Text("Ej. Lugar tranquilo para leer...") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White.copy(alpha = 0.95f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent
-                        )
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White
+                        ),
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                if (searchText.isNotEmpty()) {
+                                    isSearching = true
+                                    scope.launch {
+                                        // Llamamos a la magia de la IA
+                                        cuartos = CuartoRepository.buscarCuartosConIA(searchText)
+                                        isSearching = false
+                                    }
+                                } else {
+                                    // Si limpia el texto, recargamos todos los cuartos
+                                    scope.launch { cuartos = CuartoRepository.getCuartos() }
+                                }
+                            }) {
+                                if (isSearching) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                } else {
+                                    Icon(Icons.Default.Search, contentDescription = "Buscar con IA", tint = Color(0xFF1A8FFF))
+                                }
+                            }
+                        }
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
                     FloatingActionButton(
                         onClick = {

@@ -5,7 +5,7 @@ require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient(); 
 const app = express();
-const { generateRoomDescription, generateCoachAdvice } = require('./services/GeminiService');
+const { generateRoomDescription, generateCoachAdvice, semanticSearchRooms } = require('./services/GeminiService');
 const { parse } = require('dotenv');
 
 app.use(cors());
@@ -209,6 +209,34 @@ app.post('/api/rooms/:roomId/interact', async (req, res) => {
   } catch (error) {
     console.error("Error al interactuar con la habitación:", error);
     res.status(500).json({ error: "Error al actualizar la habitación" });
+  }
+});
+
+app.post('/api/rooms/search', async (req, res) => {
+  const { userQuery } = req.body;
+
+  try {
+    // 1. Traemos los cuartos de la base de datos
+    const rooms = await prisma.room.findMany({ where: { isPublished: true } });
+
+    // 2. Preparamos los datos resumidos para la IA
+    const roomsData = rooms.map(r => ({
+      id: r.id,
+      style: r.style,
+      description: r.aiDescription,
+      price: r.price
+    }));
+
+    // 3. ¡Llamamos a tu servicio experto! (Todo el prompt está oculto y limpio)
+    const matchedIds = await semanticSearchRooms(userQuery, roomsData);
+
+    // 4. Filtramos y devolvemos la respuesta
+    const matchedRooms = rooms.filter(room => matchedIds.includes(room.id));
+    res.json(matchedRooms);
+
+  } catch (error) {
+    console.error("Error en la ruta de búsqueda IA:", error);
+    res.status(500).json({ error: "Error realizando la búsqueda semántica" });
   }
 });
 
