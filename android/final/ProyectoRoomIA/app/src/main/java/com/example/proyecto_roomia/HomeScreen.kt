@@ -8,6 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
@@ -16,10 +18,12 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -30,6 +34,7 @@ import com.example.proyecto_roomia.navigation.Screen
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -317,72 +322,121 @@ fun HomeScreen(navController: NavController) {
             }
 
             // Tarjeta del cuarto seleccionado
-            cuartoSeleccionado?.let { cuarto ->
-                val esFavorito = cuarto.id in favoritosIds
-                Card(
+            if (cuartoSeleccionado != null) {
+                val cuarto = cuartoSeleccionado!!
+
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .align(Alignment.BottomCenter),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.BottomCenter
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(cuarto.style, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            Row {
-                                IconButton(onClick = {
-                                    user?.uid?.let { uid ->
-                                        if (esFavorito) {
-                                            db.collection("favoritos")
-                                                .whereEqualTo("usuarioId", uid)
-                                                .whereEqualTo("cuartoId", cuarto.id)
-                                                .get()
-                                                .addOnSuccessListener { docs ->
-                                                    docs.forEach { it.reference.delete() }
-                                                    favoritosIds = favoritosIds - cuarto.id
-                                                }
-                                        } else {
-                                            db.collection("favoritos")
-                                                .add(mapOf(
-                                                    "usuarioId" to uid,
-                                                    "cuartoId" to cuarto.id
-                                                ))
-                                                .addOnSuccessListener {
-                                                    favoritosIds = favoritosIds + cuarto.id
-                                                }
-                                        }
-                                    }
-                                }) {
-                                    Icon(
-                                        if (esFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                        contentDescription = "Favorito",
-                                        tint = if (esFavorito) Color.Red else Color.Gray
-                                    )
-                                }
-                                IconButton(onClick = { cuartoSeleccionado = null }) {
-                                    Text("✕", color = Color.Gray)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column {
+                            // 1. IMAGEN DE PORTADA DEL CUARTO (Usando Coil)
+                            if (cuarto.imageUrls.isNotEmpty()) {
+                                AsyncImage(
+                                    model = cuarto.imageUrls[0], // Tomamos la primera foto
+                                    contentDescription = "Foto principal de la habitación",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp), // Altura fija
+                                    contentScale = ContentScale.Crop // Recorta la imagen para llenar el espacio
+                                )
+                            } else {
+                                // Si por alguna razón no hay fotos
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("Sin imagen disponible", color = Color.Gray)
                                 }
                             }
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.LocationOn, contentDescription = null,
-                                tint = Color(0xFF1A8FFF), modifier = Modifier.size(16.dp))
-                            Text(cuarto.location, fontSize = 13.sp, color = Color.Gray)
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(cuarto.aiDescription, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            AssistChip(onClick = {}, label = {
-                                Text(cuarto.price, fontWeight = FontWeight.Bold, color = Color(0xFF1A8FFF))
-                            })
-                            AssistChip(onClick = {}, label = { Text(cuarto.area) })
+
+                            // 2. DETALLES DEL CUARTO
+                            // 2. DETALLES DEL CUARTO
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                // ... (Nombre y botones de arriba se quedan igual) ...
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = cuarto.style.ifEmpty { "Habitación" },
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                    Row {
+                                        IconButton(onClick = { /* Favoritos */ }) {
+                                            Icon(Icons.Default.FavoriteBorder, contentDescription = null, tint = Color.Gray)
+                                        }
+                                        IconButton(onClick = { cuartoSeleccionado = null }) {
+                                            Text("✕", color = Color.Gray, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFF1A8FFF), modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(cuarto.location, fontSize = 13.sp, color = Color.DarkGray)
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // --- NUEVA LÓGICA DE DESCRIPCIÓN CON FLECHA ---
+                                var expandido by remember { mutableStateOf(false) }
+
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    Text(
+                                        text = cuarto.aiDescription,
+                                        fontSize = 14.sp,
+                                        color = Color.Gray,
+                                        // Si expandido es true, ponemos un número gigante de líneas. Si no, solo 2.
+                                        maxLines = if (expandido) 100 else 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    // Flechita para expandir/colapsar
+                                    IconButton(
+                                        onClick = { expandido = !expandido },
+                                        modifier = Modifier
+                                            .align(Alignment.CenterHorizontally)
+                                            .size(30.dp) // Tamaño pequeño para que no estorbe
+                                    ) {
+                                        Icon(
+                                            imageVector = if (expandido) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Ver más",
+                                            tint = Color(0xFF1A8FFF) // Color azul para que resalte que es clickeable
+                                        )
+                                    }
+                                }
+                                // ----------------------------------------------
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                // 3. CHIPS DE PRECIO Y ÁREA
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    AssistChip(
+                                        onClick = {},
+                                        label = { Text("Q ${cuarto.price}", fontWeight = FontWeight.Bold) },
+                                        leadingIcon = { Text("💰", fontSize = 14.sp) }
+                                    )
+                                    AssistChip(
+                                        onClick = {},
+                                        label = { Text("${cuarto.area} m²", fontWeight = FontWeight.Bold) },
+                                        leadingIcon = { Text("📏", fontSize = 14.sp) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }

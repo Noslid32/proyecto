@@ -1,6 +1,7 @@
 package com.example.proyecto_roomia
 
 import android.util.Log
+import com.example.proyecto_roomia.CuartoRepository.BASE_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -70,4 +71,13 @@ object CuartoRepository {
             emptyList()
         }
     }
+
+    suspend fun sendParameters(url: String, parameters: Map<String, String>){
+        try {
+            val url = "$BASE_URL/api/rooms"
+        } catch (e : Exception) {
+            Log.e("API_EXCEPTION", "Error")
+        }
+    }
+
 }
