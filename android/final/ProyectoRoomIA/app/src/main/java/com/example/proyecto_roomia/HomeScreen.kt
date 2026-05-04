@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -167,17 +169,38 @@ fun HomeScreen(navController: NavController) {
                     mapView.overlays.removeIf { it is Marker }
 
                     // Dibuja marcadores nuevos desde la API
-                    cuartoGeoPoints.forEach { (cuarto, ubicacion) ->
-                        val marker = Marker(mapView).apply {
-                            position = ubicacion
-                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                            title = cuarto.style
-                            subDescription = "${cuarto.price} - ${cuarto.location}"
-                            setOnMarkerClickListener { _, _ ->
-                                cuartoSeleccionado = cuarto
-                                true
+                    cuartos.forEach { cuarto ->
+                        val marker = Marker(mapView)
+                        marker.position = GeoPoint(cuarto.latitude, cuarto.longitude)
+                        marker.title = cuarto.style
+
+                        // Guardamos el objeto completo para recuperarlo luego
+                        marker.relatedObject = cuarto
+
+                        // Quitamos la ventanita blanca fea que sale por defecto
+                        marker.infoWindow = null
+
+                        // ESTE ES EL MOTOR QUE ABRE LA TARJETA
+                        marker.setOnMarkerClickListener { m, _ ->
+                            // 1. Extraemos el cuarto del marcador
+                            val cuartoClick = m.relatedObject as? Cuarto
+
+                            // 2. Le decimos a Compose: "¡Hey, este es el seleccionado!"
+                            cuartoSeleccionado = cuartoClick
+
+                            // 3. Registramos la visita en el backend (tu nueva función)
+                            cuartoClick?.let {
+                                scope.launch {
+                                    CuartoRepository.registrarInteraccion(it.id, views = 1)
+                                }
                             }
+
+                            // 4. Centramos el mapa un poquito para que se vea bien
+                            mapView.controller.animateTo(m.position)
+
+                            true // Indica que nosotros manejamos el clic
                         }
+
                         mapView.overlays.add(marker)
                     }
                     mapView.invalidate() // refresca el mapa
@@ -421,7 +444,45 @@ fun HomeScreen(navController: NavController) {
                                 }
                                 // ----------------------------------------------
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
+
+// FILA DE BOTONES DE INTERACCIÓN
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly // Los centra y separa igual
+                                ) {
+                                    // Botón de Compartir (Link)
+                                    Button(
+                                        onClick = {
+                                            scope.launch {
+                                                CuartoRepository.registrarInteraccion(cuarto.id, shares = 1)
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE3F2FD)), // Azul muy clarito
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(Icons.Default.Share, contentDescription = null, tint = Color(0xFF1A8FFF), modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Compartir", color = Color(0xFF1A8FFF), fontSize = 12.sp)
+                                    }
+
+                                    // Botón de Contacto (Teléfono)
+                                    Button(
+                                        onClick = {
+                                            scope.launch {
+                                                CuartoRepository.registrarInteraccion(cuarto.id, contacts = 1)
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE8F5E9)), // Verde muy clarito
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Contactar", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
 
                                 // 3. CHIPS DE PRECIO Y ÁREA
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

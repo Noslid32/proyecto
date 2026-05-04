@@ -6,6 +6,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import org.json.JSONArray
 
 object CuartoRepository {
@@ -13,6 +16,7 @@ object CuartoRepository {
     private val client = OkHttpClient()
     // Asegúrate de que esta URL sea la que te da ngrok actualmente
     private const val BASE_URL = "https://breeding-brute-antirust.ngrok-free.dev"
+    private val JSON = "application/json; charset=utf-8".toMediaType()
 
     suspend fun getCuartos(): List<Cuarto> = withContext(Dispatchers.IO) {
         try {
@@ -72,11 +76,30 @@ object CuartoRepository {
         }
     }
 
-    suspend fun sendParameters(url: String, parameters: Map<String, String>){
+    suspend fun registrarInteraccion(roomId: String, shares: Int = 0, contacts: Int = 0, views: Int = 0) = withContext(Dispatchers.IO) {
         try {
-            val url = "$BASE_URL/api/rooms"
-        } catch (e : Exception) {
-            Log.e("API_EXCEPTION", "Error")
+            // Construimos el cuerpo del JSON
+            val json = JSONObject().apply {
+                put("shares", shares)
+                put("contacts", contacts)
+                put("viewsCount", views)
+            }
+
+            val request = Request.Builder()
+                .url("$BASE_URL/api/rooms/$roomId/interact")
+                .header("ngrok-skip-browser-warning", "true")
+                .post(json.toString().toRequestBody(JSON))
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    Log.e("API_INTERACT", "Error al registrar: ${response.code}")
+                } else {
+                    Log.d("API_INTERACT", "Interacción registrada con éxito")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("API_INTERACT", "Error de red: ${e.message}")
         }
     }
 
