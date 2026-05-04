@@ -14,21 +14,17 @@ import org.json.JSONArray
 object CuartoRepository {
 
     private val client = OkHttpClient()
-    // Asegúrate de que esta URL sea la que te da ngrok actualmente
     private const val BASE_URL = "https://breeding-brute-antirust.ngrok-free.dev"
     private val JSON = "application/json; charset=utf-8".toMediaType()
 
     suspend fun getCuartos(): List<Cuarto> = withContext(Dispatchers.IO) {
         try {
-            // CORRECCIÓN 1: Apuntar al endpoint correcto /api/rooms
             val url = "$BASE_URL/api/rooms"
-
             val request = Request.Builder()
                 .url(url)
-                .header("ngrok-skip-browser-warning", "true") // CORRECCIÓN 2: Saltar aviso de ngrok
+                .header("ngrok-skip-browser-warning", "true")
                 .get()
                 .build()
-
             val response = client.newCall(request).execute()
 
             if (!response.isSuccessful) {
@@ -38,17 +34,11 @@ object CuartoRepository {
 
             val body = response.body?.string() ?: return@withContext emptyList()
             Log.d("API_SUCCESS", "Datos recibidos: $body")
-
             val jsonArray = JSONArray(body)
             val cuartos = mutableListOf<Cuarto>()
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
-
-                // CORRECCIÓN 3: Si quieres ver TODO aunque no esté publicado para probar,
-                // comenta la siguiente línea:
-                // if (!obj.optBoolean("isPublished", false)) continue
-
                 cuartos.add(
                     Cuarto(
                         id = obj.optString("id", ""),
@@ -78,7 +68,7 @@ object CuartoRepository {
 
     suspend fun registrarInteraccion(roomId: String, shares: Int = 0, contacts: Int = 0, views: Int = 0) = withContext(Dispatchers.IO) {
         try {
-            // Construimos el cuerpo del JSON
+            // Construimos el JSON
             val json = JSONObject().apply {
                 put("shares", shares)
                 put("contacts", contacts)
@@ -105,7 +95,6 @@ object CuartoRepository {
 
     suspend fun buscarCuartosConIA(userQuery: String): List<Cuarto> = withContext(Dispatchers.IO) {
         try {
-            // Creamos el JSON que enviaremos
             val jsonBody = JSONObject().apply {
                 put("userQuery", userQuery)
             }
@@ -119,7 +108,7 @@ object CuartoRepository {
             val response = client.newCall(request).execute()
             val body = response.body?.string() ?: return@withContext emptyList()
 
-            // Reutilizamos tu lógica de parseo
+            // Lógica de parseo
             val jsonArray = JSONArray(body)
             val cuartosFiltrados = mutableListOf<Cuarto>()
 

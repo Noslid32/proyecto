@@ -34,12 +34,12 @@ fun FavoritesScreen(navController: NavController) {
     var favoritosIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // 🔹 Cargar cuartos desde API
+    //Cargar cuartos desde API
     LaunchedEffect(Unit) {
         todosCuartos = CuartoRepository.getCuartos()
     }
 
-    // 🔹 Cargar favoritos
+    //favoritos
     LaunchedEffect(user?.uid) {
         user?.uid?.let { uid ->
             db.collection("favoritos")
@@ -114,8 +114,6 @@ fun FavoritesScreen(navController: NavController) {
                             ) {
 
                                 Column {
-
-                                    //  IMAGEN
                                     if (cuarto.imageUrls.isNotEmpty()) {
                                         AsyncImage(
                                             model = cuarto.imageUrls[0],
@@ -128,8 +126,6 @@ fun FavoritesScreen(navController: NavController) {
                                     }
 
                                     Column(modifier = Modifier.padding(16.dp)) {
-
-                                        // 🔹 HEADER
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -160,7 +156,7 @@ fun FavoritesScreen(navController: NavController) {
                                                 }
                                             }
 
-                                            // ❤️ QUITAR FAVORITO
+                                            // Quitar favorito
                                             IconButton(onClick = {
                                                 user?.uid?.let { uid ->
                                                     db.collection("favoritos")
@@ -180,21 +176,16 @@ fun FavoritesScreen(navController: NavController) {
                                                 )
                                             }
                                         }
-
                                         Spacer(modifier = Modifier.height(8.dp))
 
-                                        // 🔹 DESCRIPCIÓN
                                         Text(
                                             cuarto.aiDescription,
                                             fontSize = 14.sp,
                                             color = Color.DarkGray
                                         )
-
                                         Spacer(modifier = Modifier.height(8.dp))
 
-                                        // 🔥 CHIPS BONITOS
                                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
                                             AssistChip(
                                                 onClick = {},
                                                 label = {
